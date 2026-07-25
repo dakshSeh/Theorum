@@ -245,3 +245,74 @@ Write the extensive notes now:`;
 
   return content;
 }
+
+export async function gradeSubjectiveAnswers(
+  answers: {
+    id: string;
+    questionText: string;
+    userAnswer: string;
+    modelAnswer: string;
+    marks: number;
+  }[],
+  apiKey: string
+): Promise<{ id: string; marksAwarded: number; feedback: string; isCorrect: boolean }[]> {
+  const prompt = `You are a fair, encouraging, and highly competent AI teacher grading a student's test.
+Your task is to grade the following subjective answers submitted by a student.
+
+For each question, you are given:
+- ID
+- Question Text
+- Student's Answer
+- Model Answer (Reference)
+- Maximum Marks (Weightage)
+
+CRITICAL RULES:
+1. Grade the student's answer fairly out of the maximum marks. Partial marks (e.g., 1.5, 2) can be awarded if the answer is partially correct.
+2. Provide constructive feedback (1-3 sentences) explaining what they did well (praise) and what they missed or got wrong.
+3. Determine if the answer is "correct" overall (usually meaning they scored more than 50% of the max marks, or grasped the core concept).
+4. Do not be overly harsh for minor spelling mistakes, but be strict on factual accuracy.
+
+You MUST respond ONLY with a valid JSON array of objects in this exact format, with NO other text:
+[
+  {
+    "id": "question_id_here",
+    "marksAwarded": 2.5,
+    "feedback": "Great job identifying X! However, you missed Y which is crucial for full marks.",
+    "isCorrect": true
+  }
+]
+
+INPUT ANSWERS:
+${JSON.stringify(answers, null, 2)}
+
+Respond with the JSON array now:`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2, // Low temperature for consistent grading
+      max_tokens: 4000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Groq API error: ${response.status} — ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+
+  if (!content) throw new Error('No content returned from AI');
+
+  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const results = JSON.parse(cleaned) as { id: string; marksAwarded: number; feedback: string; isCorrect: boolean }[];
+  
+  return results;
+}

@@ -22,6 +22,7 @@ export default function GeneratePage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [generationMode, setGenerationMode] = useState<'pdf' | 'topic'>('pdf');
 
   const handleTextExtracted = useCallback((text: string, name: string) => {
     setExtractedText(text);
@@ -194,26 +195,28 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {/* Left: Upload + Preview */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div className="card">
-              <h3 style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
-                {pageState === 'upload' ? 'Upload Material' : `📄 ${fileName}`}
-              </h3>
-              {pageState === 'upload' ? (
-                <UploadZone onTextExtracted={handleTextExtracted} />
-              ) : (
-                <div>
-                  <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1rem', maxHeight: 320, overflowY: 'auto', fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {extractedText.slice(0, 3000)}{extractedText.length > 3000 ? '\n\n[…truncated for preview]' : ''}
+            {generationMode === 'pdf' && (
+              <div className="card">
+                <h3 style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
+                  {pageState === 'upload' ? 'Upload Material' : `📄 ${fileName}`}
+                </h3>
+                {pageState === 'upload' ? (
+                  <UploadZone onTextExtracted={handleTextExtracted} />
+                ) : (
+                  <div>
+                    <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1rem', maxHeight: 320, overflowY: 'auto', fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {extractedText.slice(0, 3000)}{extractedText.length > 3000 ? '\n\n[…truncated for preview]' : ''}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{extractedText.split(/\s+/).length.toLocaleString()} words extracted</span>
+                      <button className="btn btn-ghost btn-sm" onClick={() => { setPageState('upload'); setExtractedText(''); setQuestions([]); setQuizSet(null); }}>
+                        Replace file
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{extractedText.split(/\s+/).length.toLocaleString()} words extracted</span>
-                    <button className="btn btn-ghost btn-sm" onClick={() => { setPageState('upload'); setExtractedText(''); setQuestions([]); setQuizSet(null); }}>
-                      Replace file
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Questions output */}
             {questions.length > 0 && (
@@ -236,6 +239,8 @@ export default function GeneratePage() {
               onGenerate={handleGenerate}
               loading={generating}
               pdfUploaded={!!extractedText}
+              mode={generationMode}
+              onModeChange={setGenerationMode}
             />
           </div>
         </div>

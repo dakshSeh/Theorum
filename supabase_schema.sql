@@ -19,10 +19,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
@@ -65,6 +67,7 @@ CREATE TABLE IF NOT EXISTS public.uploads (
 
 ALTER TABLE public.uploads ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own uploads" ON public.uploads;
 CREATE POLICY "Users manage own uploads"
   ON public.uploads FOR ALL
   USING (auth.uid() = user_id);
@@ -82,6 +85,7 @@ CREATE TABLE IF NOT EXISTS public.folders (
 
 ALTER TABLE public.folders ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own folders" ON public.folders;
 CREATE POLICY "Users manage own folders"
   ON public.folders FOR ALL
   USING (auth.uid() = user_id);
@@ -104,6 +108,7 @@ CREATE TABLE IF NOT EXISTS public.quiz_sets (
 
 ALTER TABLE public.quiz_sets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own quiz sets" ON public.quiz_sets;
 CREATE POLICY "Users manage own quiz sets"
   ON public.quiz_sets FOR ALL
   USING (auth.uid() = user_id);
@@ -132,6 +137,7 @@ CREATE TABLE IF NOT EXISTS public.questions (
 
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own questions" ON public.questions;
 CREATE POLICY "Users manage own questions"
   ON public.questions FOR ALL
   USING (auth.uid() = user_id);
@@ -154,6 +160,7 @@ CREATE TABLE IF NOT EXISTS public.quiz_sessions (
 
 ALTER TABLE public.quiz_sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own sessions" ON public.quiz_sessions;
 CREATE POLICY "Users manage own sessions"
   ON public.quiz_sessions FOR ALL
   USING (auth.uid() = user_id);
@@ -169,11 +176,14 @@ CREATE TABLE IF NOT EXISTS public.session_answers (
   user_answer     TEXT,
   is_correct      BOOLEAN,
   time_taken_secs INTEGER,
+  ai_feedback     TEXT,
+  marks_awarded   NUMERIC(5,2),
   created_at      TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.session_answers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own answers" ON public.session_answers;
 CREATE POLICY "Users manage own answers"
   ON public.session_answers FOR ALL
   USING (auth.uid() = user_id);

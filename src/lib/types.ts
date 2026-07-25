@@ -100,6 +100,8 @@ export interface SessionAnswer {
   user_answer: string | null;
   is_correct: boolean | null;
   time_taken_secs: number | null;
+  ai_feedback: string | null;
+  marks_awarded: number | null;
 }
 
 // Generation options

@@ -160,7 +160,7 @@ export default function ReviewPage() {
             <h3 style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>Session History</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {sessions.slice(0, 8).map(s => (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'var(--surface-2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                <Link href={`/review/${s.id}`} key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'var(--surface-2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: (s.accuracy || 0) >= 70 ? 'var(--success)' : (s.accuracy || 0) >= 40 ? 'var(--warning)' : 'var(--error)', flexShrink: 0 }} />
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <div style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -172,7 +172,7 @@ export default function ReviewPage() {
                     <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ember)' }}>{s.accuracy ? `${Math.round(s.accuracy)}%` : '—'}</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{formatTime(s.duration_secs || 0)}</div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </motion.div>

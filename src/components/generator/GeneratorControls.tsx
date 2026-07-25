@@ -16,6 +16,8 @@ interface Props {
   ) => void;
   loading: boolean;
   pdfUploaded: boolean;
+  mode: 'pdf' | 'topic';
+  onModeChange: (mode: 'pdf' | 'topic') => void;
 }
 
 const QUESTION_TYPES: { key: QuestionType; label: string }[] = [
@@ -32,8 +34,7 @@ const QUESTION_TYPES: { key: QuestionType; label: string }[] = [
 const SUBJECTS = ['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Economics', 'History', 'Geography', 'Political Science', 'English', 'Business Studies', 'Other'];
 const CLASSES = ['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Above / Advanced'];
 
-export default function GeneratorControls({ onGenerate, loading, pdfUploaded }: Props) {
-  const [mode, setMode] = useState<'pdf' | 'topic'>('pdf');
+export default function GeneratorControls({ onGenerate, loading, pdfUploaded, mode, onModeChange }: Props) {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
   const [chapter, setChapter] = useState('');
@@ -88,7 +89,7 @@ export default function GeneratorControls({ onGenerate, loading, pdfUploaded }: 
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.5rem' }}>
           <button
-            onClick={() => setMode('pdf')}
+            onClick={() => onModeChange('pdf')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem',
               padding: '1rem', borderRadius: 'var(--radius-lg)',
@@ -105,7 +106,7 @@ export default function GeneratorControls({ onGenerate, loading, pdfUploaded }: 
           </button>
           
           <button
-            onClick={() => setMode('topic')}
+            onClick={() => onModeChange('topic')}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem',
               padding: '1rem', borderRadius: 'var(--radius-lg)',

@@ -52,15 +52,24 @@ export default function PracticePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const correct = results.filter(r => r.isCorrect).length;
-    const accuracy = results.length > 0 ? (correct / results.length) * 100 : 0;
+    const totalPossibleMarks = questions.reduce((sum, q) => sum + (q.marks || 1), 0);
+    const totalAwardedMarks = results.reduce((sum, r) => {
+      if (r.marksAwarded !== undefined && r.marksAwarded !== null) return sum + r.marksAwarded;
+      if (r.isCorrect) {
+        const q = questions.find(q => q.id === r.questionId);
+        return sum + (q?.marks || 1);
+      }
+      return sum;
+    }, 0);
+
+    const accuracy = totalPossibleMarks > 0 ? (totalAwardedMarks / totalPossibleMarks) * 100 : 0;
     const duration = results.reduce((s, r) => s + r.timeTakenSecs, 0);
 
     const { data: session } = await supabase.from('quiz_sessions').insert({
       user_id: user.id,
       quiz_set_id: quizSet.id,
       mode: quizMode,
-      score: correct,
+      score: totalAwardedMarks,
       accuracy,
       duration_secs: duration,
       completed: true,
@@ -75,6 +84,8 @@ export default function PracticePage() {
         user_answer: r.userAnswer,
         is_correct: r.isCorrect,
         time_taken_secs: r.timeTakenSecs,
+        ai_feedback: r.aiFeedback,
+        marks_awarded: r.marksAwarded,
       }));
       await supabase.from('session_answers').insert(answers);
     }
