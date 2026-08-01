@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { QuizSession, SessionAnswer, Question, QuizSet } from '@/lib/types';
@@ -23,6 +23,7 @@ export default function ReviewDetailPage() {
   const [session, setSession] = useState<SessionWithSet | null>(null);
   const [answers, setAnswers] = useState<AnswerWithQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingTargeted, setGeneratingTargeted] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -59,6 +60,31 @@ export default function ReviewDetailPage() {
     load();
   }, [id, router]);
 
+  const handleGenerateTargeted = async () => {
+    if (!session) return;
+    setGeneratingTargeted(true);
+    try {
+      const res = await fetch('/api/practice/targeted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: session.id,
+          quizSetId: session.quiz_sets.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate targeted practice');
+      
+      if (data.quizSetId) {
+        router.push(`/practice/${data.quizSetId}`);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Something went wrong');
+    } finally {
+      setGeneratingTargeted(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
@@ -91,6 +117,21 @@ export default function ReviewDetailPage() {
           </div>
         </div>
       </motion.div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+        <button 
+          className="btn btn-primary" 
+          onClick={handleGenerateTargeted}
+          disabled={generatingTargeted}
+          style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+        >
+          {generatingTargeted ? (
+            <><Loader2 size={16} className="animate-spin" /> Crafting Targeted Practice...</>
+          ) : (
+            <>Generate Targeted Practice</>
+          )}
+        </button>
+      </div>
 
       <h2 style={{ fontSize: '1.2rem', marginBottom: '1.25rem' }}>Detailed Responses</h2>
 

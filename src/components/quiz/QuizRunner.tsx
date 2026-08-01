@@ -9,6 +9,7 @@ interface Props {
   mode: QuizMode;
   timeLimitMinutes?: number;
   onComplete: (results: SessionResult[]) => void;
+  onGenerateTargeted?: () => Promise<void>;
 }
 
 export interface SessionResult {
@@ -74,19 +75,20 @@ const playSound = (type: 'click' | 'correct' | 'incorrect') => {
   }
 };
 
-export default function QuizRunner({ questions, mode, timeLimitMinutes = 30, onComplete }: Props) {
+export default function QuizRunner({ questions, mode, timeLimitMinutes = 30, onComplete, onGenerateTargeted }: Props) {
   const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<SessionResult[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [answers, setAnswers] = useState<SessionResult[]>([]);
   const [finished, setFinished] = useState(false);
+  const [isGrading, setIsGrading] = useState(false);
+  const [generatingTargeted, setGeneratingTargeted] = useState(false);
   const [totalTime, setTotalTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(timeLimitMinutes * 60);
   const startTime = useRef<number>(0);
   const questionStart = useRef<number>(0);
 
   // AI Grading State
-  const [isGrading, setIsGrading] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<{ marksAwarded: number, text: string, isCorrect: boolean } | null>(null);
 
   // Initialize timestamps on mount only
@@ -307,6 +309,27 @@ export default function QuizRunner({ questions, mode, timeLimitMinutes = 30, onC
             </div>
           ))}
         </div>
+
+        {onGenerateTargeted && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={async () => {
+                setGeneratingTargeted(true);
+                try { await onGenerateTargeted(); } 
+                finally { setGeneratingTargeted(false); }
+              }}
+              disabled={generatingTargeted}
+              style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+            >
+              {generatingTargeted ? (
+                <><Loader2 size={16} className="animate-spin" /> Crafting Targeted Practice...</>
+              ) : (
+                <>Generate Targeted Practice</>
+              )}
+            </button>
+          </div>
+        )}
 
         <div style={{ textAlign: 'left', marginTop: '3rem', maxWidth: 800, margin: '3rem auto 0' }}>
           <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', textAlign: 'center' }}>Session Review</h3>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookMarked, Folder, Plus, Play, Trash2, Search, FolderPlus, X } from 'lucide-react';
+import { BookMarked, Folder, Plus, Play, Trash2, Search, FolderPlus, X, Crosshair } from 'lucide-react';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -115,11 +115,13 @@ export default function SavedPage() {
           ) : (
             <motion.div layout style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
               <AnimatePresence>
-                {filtered.map((qs, i) => (
+                {filtered.map((qs, i) => {
+                  const isTargeted = qs.title.startsWith('Targeted Practice:');
+                  return (
                   <motion.div key={qs.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ delay: i * 0.04 }} className="card card-ember" style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <BookMarked size={15} color="var(--ember)" />
+                        {isTargeted ? <Crosshair size={15} color="var(--ember)" /> : <BookMarked size={15} color="var(--ember)" />}
                         <button className="btn btn-icon btn-ghost" style={{ padding: '0.25rem', color: 'var(--text-dim)' }} onClick={() => deleteQuizSet(qs.id)}><Trash2 size={13} /></button>
                       </div>
                       <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.35rem', lineHeight: 1.3 }}>{qs.title}</h3>
@@ -134,7 +136,8 @@ export default function SavedPage() {
                       <Link href={`/practice/${qs.id}`} className="btn btn-ghost btn-sm" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}><Play size={11} /> Practice</Link>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </AnimatePresence>
             </motion.div>
           )}

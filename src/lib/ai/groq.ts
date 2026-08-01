@@ -316,3 +316,92 @@ Respond with the JSON array now:`;
   
   return results;
 }
+
+export async function generateTargetedPractice(
+  originalTitle: string,
+  userPerformance: {
+    questionText: string;
+    questionType: string;
+    userAnswer: string;
+    isCorrect: boolean;
+    marksAwarded?: number;
+    maxMarks: number;
+    feedback?: string;
+  }[],
+  apiKey: string
+): Promise<{
+  analysis: string;
+  difficulty: "easy" | "moderate" | "hard" | "mixed";
+  title: string;
+  questions: GeneratedQuestion[];
+}> {
+  const prompt = `You are an expert CBSE AI tutor. A student just completed a quiz titled "${originalTitle}".
+I am providing their performance on the quiz below.
+Your task is to analyze their weak points and generate a NEW targeted practice quiz to help them improve.
+
+RULES:
+1. Analyze the performance and isolate ONLY the specific concepts and topics from the questions where the user scored poorly or got the answer incorrect.
+2. Determine their overall performance. If they did very poorly (many mistakes), set the new quiz difficulty to 'easy'. If they did okay but made a few mistakes, set it to 'moderate'. If they got almost everything right, set it to 'hard' to challenge them further.
+3. Generate exactly 5 to 10 NEW questions that EXCLUSIVELY test the specific weak areas you identified in step 1. Do not generate questions for concepts they already mastered. Use a mix of types (e.g. MCQ, short answer).
+4. Output EXACTLY a JSON object with this schema, and NO markdown code fences or conversational text:
+{
+  "analysis": "A brief explanation of what the student needs to work on and why you chose these questions.",
+  "difficulty": "easy",
+  "title": "Targeted Practice: [Topic]",
+  "questions": [
+    {
+      "question_text": "...",
+      "question_type": "mcq", // or short_2mark, long_5mark, etc.
+      "difficulty": "easy",
+      "options": [{"label":"A", "text":"...", "is_correct":true}, ...], // ONLY if mcq
+      "answer": "...",
+      "explanation": "...",
+      "marks": 1
+    }
+  ]
+}
+
+USER PERFORMANCE:
+${JSON.stringify(userPerformance, null, 2)}
+
+Respond with ONLY the raw JSON object.`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 8000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Groq API error: ${response.status} — ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No content returned from AI');
+
+  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+
+  // Normalize questions
+  parsed.questions = parsed.questions.map((q: any, i: number) => ({
+    question_text: q.question_text || `Question ${i + 1}`,
+    question_type: (q.question_type || 'mcq') as QuestionType,
+    difficulty: (q.difficulty || 'moderate') as Difficulty,
+    options: q.options || undefined,
+    answer: q.answer || '',
+    explanation: q.explanation || '',
+    marks: q.marks || 1,
+  }));
+
+  return parsed;
+}

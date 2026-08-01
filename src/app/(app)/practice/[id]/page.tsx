@@ -18,6 +18,7 @@ export default function PracticePage() {
   const [loading, setLoading] = useState(true);
   const [quizMode, setQuizMode] = useState<QuizMode | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -88,6 +89,30 @@ export default function PracticePage() {
         marks_awarded: r.marksAwarded,
       }));
       await supabase.from('session_answers').insert(answers);
+      setCompletedSessionId(session.id);
+    }
+  };
+
+  const handleGenerateTargeted = async () => {
+    if (!completedSessionId || !quizSet) return;
+    try {
+      const res = await fetch('/api/practice/targeted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: completedSessionId,
+          quizSetId: quizSet.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate targeted practice');
+      
+      if (data.quizSetId) {
+        router.push(`/practice/${data.quizSetId}`);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Something went wrong');
+      throw err;
     }
   };
 
@@ -228,6 +253,7 @@ export default function PracticePage() {
               mode={quizMode || 'practice'}
               timeLimitMinutes={Math.max(10, questions.length * 1.5)}
               onComplete={handleSessionComplete}
+              onGenerateTargeted={completedSessionId ? handleGenerateTargeted : undefined}
             />
           </div>
         )

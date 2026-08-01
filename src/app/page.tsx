@@ -41,6 +41,7 @@ const REVIEWS = [
   { text: "I used to dread finding practice questions for my exams. Now I just upload the chapter and I'm ready to study in seconds.", author: "Priya", role: "Class 10 Student" },
   { text: "The detailed analytics helped me identify exactly which concepts I was weak in. My test scores have improved drastically.", author: "Rahul", role: "University Freshman" },
   { text: "I used Theorem while preparing for JEE. The targeted practice and AI feedback really helped improve my performance. I highly recommend it to anyone preparing for competitive exams.", author: "Deepesh", role: "JEE Adv. AIR 3095", special: true },
+  { text: "I used Theorum to analyze my performance across practice sets, and the ability to adjust question difficulty based on my aptitude made every session focused and genuinely productive.", author: "Yash", role: "NEET AIR 7173", special: true },
   { text: "Finally, an AI tool that actually understands the nuances of syllabus requirements instead of hallucinating random trivia.", author: "Ananya", role: "Class 11 Commerce" },
   { text: "This is the smartest way I've ever prepared for finals. The flashcards feature is an absolute lifesaver.", author: "Kiran", role: "Class 12 Humanities" }
 ];

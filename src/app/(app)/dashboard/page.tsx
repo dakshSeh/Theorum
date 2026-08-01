@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, FileText, BookMarked, ArrowRight, TrendingUp } from 'lucide-react';
+import { Zap, FileText, BookMarked, ArrowRight, TrendingUp, Crosshair } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import type { Upload, QuizSet, QuizSession } from '@/lib/types';
@@ -259,16 +259,19 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {quizSets.map(qs => (
-                <Link key={qs.id} href={`/practice/${qs.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', background: 'var(--surface-2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', textDecoration: 'none', transition: 'border-color 0.2s' }}>
-                  <BookMarked size={15} color="var(--ember)" />
-                  <div style={{ flex: 1, overflow: 'hidden' }}>
+              {quizSets.map(qs => {
+                const isTargeted = qs.title.startsWith('Targeted Practice:');
+                return (
+                  <Link key={qs.id} href={`/practice/${qs.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', background: 'var(--surface-2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', textDecoration: 'none', transition: 'border-color 0.2s' }}>
+                    {isTargeted ? <Crosshair size={15} color="var(--ember)" /> : <BookMarked size={15} color="var(--text-muted)" />}
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{qs.title}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{qs.question_count} questions · {qs.difficulty}</div>
                   </div>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', flexShrink: 0 }}>{formatTime(qs.created_at)}</span>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.div>

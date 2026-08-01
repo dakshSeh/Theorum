@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Download, BookOpen, Play, Zap, AlertCircle, X } from 'lucide-react';
 import UploadZone from '@/components/forge/UploadZone';
@@ -13,6 +14,7 @@ import { createClient } from '@/lib/supabase/client';
 type PageState = 'upload' | 'generate' | 'practice';
 
 export default function GeneratePage() {
+  const router = useRouter();
   const [pageState, setPageState] = useState<PageState>('upload');
   const [extractedText, setExtractedText] = useState('');
   const [fileName, setFileName] = useState('');
@@ -23,6 +25,7 @@ export default function GeneratePage() {
   const [quizMode, setQuizMode] = useState<QuizMode>('practice');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [generationMode, setGenerationMode] = useState<'pdf' | 'topic'>('pdf');
+  const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
 
   const handleTextExtracted = useCallback((text: string, name: string) => {
     setExtractedText(text);
@@ -98,8 +101,32 @@ export default function GeneratePage() {
         time_taken_secs: r.timeTakenSecs,
       }));
       await supabase.from('session_answers').insert(answers);
+      setCompletedSessionId(session.id);
     }
   }, [quizSet, quizMode]);
+
+  const handleGenerateTargeted = useCallback(async () => {
+    if (!completedSessionId || !quizSet) return;
+    try {
+      const res = await fetch('/api/practice/targeted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: completedSessionId,
+          quizSetId: quizSet.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate targeted practice');
+      
+      if (data.quizSetId) {
+        router.push(`/practice/${data.quizSetId}`);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Something went wrong');
+      throw err;
+    }
+  }, [completedSessionId, quizSet, router]);
 
   const exportPDF = async () => {
     if (!questions.length) return;
@@ -189,6 +216,7 @@ export default function GeneratePage() {
             mode={quizMode}
             timeLimitMinutes={30}
             onComplete={handleSessionComplete}
+            onGenerateTargeted={completedSessionId ? handleGenerateTargeted : undefined}
           />
         </div>
       ) : (
