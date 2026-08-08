@@ -393,6 +393,7 @@ Respond with ONLY the raw JSON object.`;
   const parsed = JSON.parse(cleaned);
 
   // Normalize questions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parsed.questions = parsed.questions.map((q: any, i: number) => ({
     question_text: q.question_text || `Question ${i + 1}`,
     question_type: (q.question_type || 'mcq') as QuestionType,

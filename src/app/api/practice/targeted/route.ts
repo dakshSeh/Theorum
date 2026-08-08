@@ -46,6 +46,7 @@ export async function POST(req: Request) {
     // 3. Prepare performance data for the AI
     // We filter for questions where the user was either wrong, or lost marks, or just send all to let AI decide.
     // Let's send everything so AI sees the full context, but emphasize what's wrong.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userPerformance = session.session_answers.map((ans: any) => ({
       questionText: ans.questions.question_text,
       questionType: ans.questions.question_type,
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
     }
 
     // 6. Save the new questions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const questionsToInsert = aiResult.questions.map((q: any, i: number) => ({
       quiz_set_id: newQuizSet.id,
       user_id: session.user_id,
@@ -121,8 +123,8 @@ export async function POST(req: Request) {
       analysis: aiResult.analysis 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Targeted practice generation error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal server error' }, { status: 500 });
   }
 }

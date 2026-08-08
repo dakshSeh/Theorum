@@ -287,7 +287,6 @@ const DotField = memo(({
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchstart', onTouchStart);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

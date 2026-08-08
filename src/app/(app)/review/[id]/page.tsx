@@ -78,8 +78,8 @@ export default function ReviewDetailPage() {
       if (data.quizSetId) {
         router.push(`/practice/${data.quizSetId}`);
       }
-    } catch (err: any) {
-      alert(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setGeneratingTargeted(false);
     }

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Zap, BarChart2,
   BookMarked, LogOut, User, Menu, X, ChevronRight,
-  BookOpen, Layers,
+  BookOpen, Layers, MessageSquare
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -154,6 +154,13 @@ function Sidebar({ userName, isOpen, setIsOpen }: { userName: string, isOpen: bo
           </div>
           <ThemeToggle />
         </div>
+        <Link
+          href="/feedback"
+          className="btn btn-ghost btn-sm"
+          style={{ width: '100%', justifyContent: 'flex-start', gap: '0.6rem', color: 'var(--text-muted)', textDecoration: 'none' }}
+        >
+          <MessageSquare size={14} /> Leave Feedback
+        </Link>
         <button
           onClick={handleSignOut}
           className="btn btn-ghost btn-sm"

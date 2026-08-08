@@ -122,8 +122,8 @@ export default function GeneratePage() {
       if (data.quizSetId) {
         router.push(`/practice/${data.quizSetId}`);
       }
-    } catch (err: any) {
-      alert(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Something went wrong');
       throw err;
     }
   }, [completedSessionId, quizSet, router]);

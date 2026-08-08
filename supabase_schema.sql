@@ -189,7 +189,28 @@ CREATE POLICY "Users manage own answers"
   USING (auth.uid() = user_id);
 
 -- ============================================================
--- 8. INDEXES
+-- 8. SITE FEEDBACK
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.site_feedback (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id         UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  role            TEXT CHECK (role IN ('student', 'teacher', 'other')),
+  rating          INTEGER CHECK (rating >= 1 AND rating <= 5),
+  message         TEXT NOT NULL,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.site_feedback ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can insert feedback" ON public.site_feedback;
+CREATE POLICY "Anyone can insert feedback"
+  ON public.site_feedback FOR INSERT
+  WITH CHECK (true);
+
+-- No select policy needed because we will query using a service role key in the admin route.
+
+-- ============================================================
+-- 9. INDEXES
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_uploads_user        ON public.uploads(user_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_sets_user      ON public.quiz_sets(user_id);
@@ -198,13 +219,13 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user       ON public.quiz_sessions(user_
 CREATE INDEX IF NOT EXISTS idx_answers_session     ON public.session_answers(session_id);
 
 -- ============================================================
--- 9. CACHE RELOAD
+-- 10. CACHE RELOAD
 -- ============================================================
 -- This is critical to ensure the API recognizes the new tables immediately
 NOTIFY pgrst, 'reload schema';
 
 -- ============================================================
--- 10. STORAGE BUCKET POLICIES
+-- 11. STORAGE BUCKET POLICIES
 -- ============================================================
 -- Note: You must first create a Private bucket named "uploads" in the dashboard
 -- Then these policies will secure it.

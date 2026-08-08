@@ -126,7 +126,7 @@ export default function QuizRunner({ questions, mode, timeLimitMinutes = 30, onC
           
           if (data.results) {
             gradedAnswers = gradedAnswers.map(ans => {
-              const gradeResult = data.results.find((r: any) => r.id === ans.questionId);
+              const gradeResult = data.results.find((r: { id: string, isCorrect: boolean, marksAwarded: number, feedback: string }) => r.id === ans.questionId);
               if (gradeResult) {
                 return {
                   ...ans,

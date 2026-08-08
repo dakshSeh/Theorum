@@ -103,7 +103,10 @@ export default function AboutPage() {
               <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Theorem</span>
             </div>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Where learning is forged through practice.</p>
-            <Link href="/" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>← Back to home</Link>
+            <div style={{ display: 'flex', gap: '1.5rem' }}>
+              <Link href="/feedback" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Leave Feedback</Link>
+              <Link href="/" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>← Back to home</Link>
+            </div>
           </div>
         </footer>
       </div>
