@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import { createClient } from '@/lib/supabase/client';
 import type { QuizSession, QuizSet } from '@/lib/types';
@@ -67,6 +68,24 @@ export default function ReviewPage() {
   const subjectData = Object.entries(subjectMap).map(([subject, { count, totalAccuracy }]) => ({
     subject, accuracy: count > 0 ? Math.round(totalAccuracy / count) : 0, sessions: count,
   })).sort((a, b) => b.accuracy - a.accuracy);
+
+  // Composite Cognitive Skills Data
+  const skillsSessions = sessions.filter(s => s.skill_recall !== null && s.skill_recall !== undefined);
+  const avgSkills = { recall: 0, comprehension: 0, application: 0, analysis: 0, evaluation: 0 };
+  if (skillsSessions.length > 0) {
+    avgSkills.recall = Math.round(skillsSessions.reduce((s, ss) => s + (ss.skill_recall || 0), 0) / skillsSessions.length);
+    avgSkills.comprehension = Math.round(skillsSessions.reduce((s, ss) => s + (ss.skill_comprehension || 0), 0) / skillsSessions.length);
+    avgSkills.application = Math.round(skillsSessions.reduce((s, ss) => s + (ss.skill_application || 0), 0) / skillsSessions.length);
+    avgSkills.analysis = Math.round(skillsSessions.reduce((s, ss) => s + (ss.skill_analysis || 0), 0) / skillsSessions.length);
+    avgSkills.evaluation = Math.round(skillsSessions.reduce((s, ss) => s + (ss.skill_evaluation || 0), 0) / skillsSessions.length);
+  }
+  const radarData = [
+    { subject: 'Recall', A: avgSkills.recall, fullMark: 100 },
+    { subject: 'Comprehension', A: avgSkills.comprehension, fullMark: 100 },
+    { subject: 'Application', A: avgSkills.application, fullMark: 100 },
+    { subject: 'Analysis', A: avgSkills.analysis, fullMark: 100 },
+    { subject: 'Evaluation', A: avgSkills.evaluation, fullMark: 100 },
+  ];
 
   const COLORS = ['var(--ember)', '#ff9551', '#b34d0f', '#6b6b6b'];
 
@@ -155,8 +174,25 @@ export default function ReviewPage() {
             </motion.div>
           )}
 
+          {/* Cognitive Skills Radar Chart */}
+          {skillsSessions.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="card" style={{ minWidth: 0, overflow: 'hidden' }}>
+              <h3 style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>Composite Cognitive Profile</h3>
+              <div style={{ width: '100%', minHeight: 180 }}>
+                <ResponsiveContainer width="100%" height={180}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                    <PolarGrid stroke="var(--border)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-dim)', fontSize: 10 }} />
+                    <Radar name="Skills" dataKey="A" stroke="var(--ember)" fill="var(--ember)" fillOpacity={0.25} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+
           {/* Recent sessions table */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className={`card ${subjectData.length === 0 ? 'md:col-span-2' : ''}`}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card md:col-span-2">
             <h3 style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>Session History</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {sessions.slice(0, 8).map(s => (

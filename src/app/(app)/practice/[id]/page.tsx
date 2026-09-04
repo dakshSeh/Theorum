@@ -19,6 +19,34 @@ export default function PracticePage() {
   const [quizMode, setQuizMode] = useState<QuizMode | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
+  const [cognitiveScores, setCognitiveScores] = useState<{ recall: number, comprehension: number, application: number, analysis: number, evaluation: number } | null>(null);
+
+  // Poll for cognitive scores once a session completes
+  useEffect(() => {
+    if (!completedSessionId || cognitiveScores) return;
+    
+    const interval = setInterval(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('quiz_sessions')
+        .select('skill_recall, skill_comprehension, skill_application, skill_analysis, skill_evaluation')
+        .eq('id', completedSessionId)
+        .single();
+        
+      if (data && data.skill_recall !== null) {
+        setCognitiveScores({
+          recall: data.skill_recall,
+          comprehension: data.skill_comprehension,
+          application: data.skill_application,
+          analysis: data.skill_analysis,
+          evaluation: data.skill_evaluation
+        });
+        clearInterval(interval);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [completedSessionId, cognitiveScores]);
 
   useEffect(() => {
     async function load() {
@@ -90,6 +118,13 @@ export default function PracticePage() {
       }));
       await supabase.from('session_answers').insert(answers);
       setCompletedSessionId(session.id);
+
+      // Trigger AI Cognitive Skills Analysis in the background
+      fetch('/api/evaluate-skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.id })
+      }).catch(console.error);
     }
   };
 
@@ -254,6 +289,7 @@ export default function PracticePage() {
               timeLimitMinutes={Math.max(10, questions.length * 1.5)}
               onComplete={handleSessionComplete}
               onGenerateTargeted={completedSessionId ? handleGenerateTargeted : undefined}
+              cognitiveScores={cognitiveScores}
             />
           </div>
         )

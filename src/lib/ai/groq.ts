@@ -1,7 +1,7 @@
 import type { GeneratedQuestion, GenerationOptions, QuestionType, Difficulty } from '@/lib/types';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'qwen/qwen3.8-27b';
 
 function buildCBSEPrompt(text: string, options: GenerationOptions): string {
   const { difficulty, questionCount, typeMix } = options;
@@ -405,4 +405,71 @@ Respond with ONLY the raw JSON object.`;
   }));
 
   return parsed;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function evaluateCognitiveSkills(
+  sessionData: any[],
+  apiKey?: string
+): Promise<{ recall: number; comprehension: number; application: number; analysis: number; evaluation: number }> {
+  const systemPrompt = `You are an expert educational psychologist and examiner evaluating a student's cognitive skills based on Bloom's Taxonomy.
+You will be given a transcript of a quiz session containing the questions, max marks, the correct answers, the user's answers, and the marks awarded.
+Your task is to analyze the user's performance across 5 cognitive domains:
+1. Recall (Remembering facts, formulas, basic concepts)
+2. Comprehension (Understanding, explaining ideas)
+3. Application (Solving problems, numericals, using concepts in new ways)
+4. Analysis (Finding patterns, logical reasoning, assertion-reasoning)
+5. Evaluation (Synthesizing, judging, case-based advanced reasoning)
+
+For each of the 5 domains, assign a percentage score from 0 to 100 representing the student's mastery of that skill based on their performance in this quiz. 
+If a skill was not tested at all in the quiz, try to infer it from the general performance or give a default estimate (e.g., 50), but always return exactly 5 integers between 0 and 100.
+
+Output ONLY a raw JSON object with no markdown formatting.
+Schema:
+{
+  "recall": number,
+  "comprehension": number,
+  "application": number,
+  "analysis": number,
+  "evaluation": number
+}`;
+
+  const userPrompt = `Quiz Transcript:\n${JSON.stringify(sessionData, null, 2)}`;
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey || process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'qwen/qwen3.8-27b',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Groq API error (Cognitive Skills): ${response.status} — ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No content returned from AI');
+
+  const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    recall: parsed.recall || 0,
+    comprehension: parsed.comprehension || 0,
+    application: parsed.application || 0,
+    analysis: parsed.analysis || 0,
+    evaluation: parsed.evaluation || 0,
+  };
 }

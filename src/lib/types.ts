@@ -90,6 +90,11 @@ export interface QuizSession {
   completed: boolean;
   started_at: string;
   completed_at: string | null;
+  skill_recall: number | null;
+  skill_comprehension: number | null;
+  skill_application: number | null;
+  skill_analysis: number | null;
+  skill_evaluation: number | null;
 }
 
 export interface SessionAnswer {

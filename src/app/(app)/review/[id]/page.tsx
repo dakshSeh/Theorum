@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { QuizSession, SessionAnswer, Question, QuizSet } from '@/lib/types';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 interface AnswerWithQuestion extends SessionAnswer {
   questions: Question;
@@ -59,6 +60,27 @@ export default function ReviewDetailPage() {
     }
     load();
   }, [id, router]);
+
+  // Auto-poll for cognitive skills if they haven't been calculated yet
+  useEffect(() => {
+    if (!session || session.skill_recall !== null) return;
+    
+    const interval = setInterval(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('quiz_sessions')
+        .select('skill_recall, skill_comprehension, skill_application, skill_analysis, skill_evaluation')
+        .eq('id', id)
+        .single();
+      
+      if (data && data.skill_recall !== null) {
+        setSession(prev => prev ? { ...prev, ...data } : prev);
+        clearInterval(interval);
+      }
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [session, id]);
 
   const handleGenerateTargeted = async () => {
     if (!session) return;
@@ -117,6 +139,51 @@ export default function ReviewDetailPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Cognitive Skills Radar Chart */}
+      {(() => {
+        const hasSkills = session.skill_recall !== null && session.skill_recall !== undefined;
+        
+        if (hasSkills) {
+          const radarData = [
+            { subject: 'Recall', A: session.skill_recall, fullMark: 100 },
+            { subject: 'Comprehension', A: session.skill_comprehension, fullMark: 100 },
+            { subject: 'Application', A: session.skill_application, fullMark: 100 },
+            { subject: 'Analysis', A: session.skill_analysis, fullMark: 100 },
+            { subject: 'Evaluation', A: session.skill_evaluation, fullMark: 100 },
+          ];
+
+          return (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card" style={{ marginBottom: '2.5rem' }}>
+              <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', textAlign: 'center' }}>Cognitive Skill Profile</h3>
+              <div style={{ height: 350, width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                    <PolarGrid stroke="var(--border)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 13 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-dim)' }} />
+                    <Radar
+                      name="Skills"
+                      dataKey="A"
+                      stroke="var(--ember)"
+                      fill="var(--ember)"
+                      fillOpacity={0.25}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          );
+        }
+
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card" style={{ marginBottom: '2.5rem', textAlign: 'center', padding: '2rem' }}>
+            <Loader2 size={24} className="animate-spin" style={{ color: 'var(--ember)', margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>AI is analyzing your cognitive profile...</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>This usually takes a few seconds. The page will update automatically.</p>
+          </motion.div>
+        );
+      })()}
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
         <button 

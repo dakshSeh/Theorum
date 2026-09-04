@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, CheckCircle, XCircle, ChevronRight, Award, Loader2, FileText } from 'lucide-react';
 import type { Question, QuizMode, MCQOption } from '@/lib/types';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 interface Props {
   questions: Question[];
@@ -10,6 +11,7 @@ interface Props {
   timeLimitMinutes?: number;
   onComplete: (results: SessionResult[]) => void;
   onGenerateTargeted?: () => Promise<void>;
+  cognitiveScores?: { recall: number, comprehension: number, application: number, analysis: number, evaluation: number } | null;
 }
 
 export interface SessionResult {
@@ -309,6 +311,48 @@ export default function QuizRunner({ questions, mode, timeLimitMinutes = 30, onC
             </div>
           ))}
         </div>
+        
+        {/* Cognitive Skills Radar Chart */}
+        {(() => {
+          const hasScores = cognitiveScores !== undefined && cognitiveScores !== null;
+          
+          if (hasScores && cognitiveScores) {
+            const radarData = [
+              { subject: 'Recall', A: cognitiveScores.recall, fullMark: 100 },
+              { subject: 'Comprehension', A: cognitiveScores.comprehension, fullMark: 100 },
+              { subject: 'Application', A: cognitiveScores.application, fullMark: 100 },
+              { subject: 'Analysis', A: cognitiveScores.analysis, fullMark: 100 },
+              { subject: 'Evaluation', A: cognitiveScores.evaluation, fullMark: 100 },
+            ];
+            return (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card" style={{ marginBottom: '2.5rem', maxWidth: 600, margin: '0 auto 2.5rem' }}>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', textAlign: 'center' }}>Cognitive Skill Profile</h3>
+                <div style={{ height: 350, width: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                      <PolarGrid stroke="var(--border)" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 13 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-dim)' }} />
+                      <Radar name="Skills" dataKey="A" stroke="var(--ember)" fill="var(--ember)" fillOpacity={0.25} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            );
+          }
+
+          if (cognitiveScores === null) {
+            return (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card" style={{ marginBottom: '2.5rem', textAlign: 'center', padding: '2rem', maxWidth: 600, margin: '0 auto 2.5rem' }}>
+                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--ember)', margin: '0 auto 1rem' }} />
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>AI is analyzing your cognitive profile...</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>This usually takes a few seconds. The page will update automatically.</p>
+              </motion.div>
+            );
+          }
+          
+          return null;
+        })()}
 
         {onGenerateTargeted && (
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>

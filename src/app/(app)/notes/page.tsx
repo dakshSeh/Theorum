@@ -436,7 +436,7 @@ export default function NotesPage() {
                 ) : (
                   <>
                     {createMode === 'ai' ? <Zap size={14} /> : <CheckCircle size={14} />}
-                    {createMode === 'ai' ? 'Forge with Llama' : 'Save Note'}
+                    {createMode === 'ai' ? 'Forge with AI' : 'Save Note'}
                   </>
                 )}
               </button>
